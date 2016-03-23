@@ -1,0 +1,65 @@
+defpackage test :
+  import core
+  import collections
+
+public deftype AssertionException <: Exception
+
+public defn AssertionException (message: String) :
+  new AssertionException :
+    defmethod print (o:OutputStream, this) :
+      print(message)
+
+public defn do-assert (info:FileInfo, good:True|False, message:String) :
+  if not good :
+    println-all(["ASSERTION FAILED " message " AT " info])
+    
+public defn do-assert-equal<?T> (info:FileInfo, exp:?T&Equalable, got:T&Equalable, message:String) :
+  if exp != got :
+    throw(AssertionException(string-join(["ASSERTION "  message " FAILED EXPECTED " exp " GOT " got " AT " info])))
+
+public defstruct Test :
+  name: Symbol
+  value: () -> False
+
+public defstruct TestFailure :
+  test: Test
+  exception: AssertionException
+
+val all-tests = Vector<Test>()
+val tests-map = HashTable<Symbol, Test>()
+val test-failures = Vector<TestFailure>()
+val test-exceptions = Vector<Exception>()
+val test-successes = Vector<Test>()
+
+public defn run-test (t:Test) -> True|False :
+  try :
+    value(t)()
+    add(test-successes, t)
+    true
+  catch (e:AssertionException) :
+    add(test-failures, TestFailure(t, e))
+    false
+  catch (e:Exception) :
+    add(test-exceptions, e)
+    false
+
+public defn add-test (t:Test) :
+  add(all-tests, t)
+  tests-map[name(t)] = t
+
+public defn run-tests (snames:Seqable<Symbol>) :
+  val names = to-array<Symbol>(snames)
+  for test in filter(contains?{names, name(_)}, all-tests) do :
+    if run-test(test) :
+      print(".")
+    else :
+      print("E")
+  println("")
+  if length(test-failures) > 0 :
+    println-all(["There was " length(test-failures) " failures:"])
+    for failure in test-failures do :
+      println-all(["TEST " name(test(failure)) " " exception(failure)])
+  println-all(["Tests run: " length(all-tests) " Failures: " length(test-failures)])
+
+public defn run-all-tests () :
+  run-tests(seq(name, all-tests))

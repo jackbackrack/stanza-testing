@@ -1,0 +1,26 @@
+defpackage deftest-macro :
+   import core
+   import stz/parser
+   import macro-utils
+
+defn expande (form) :
+   with-syntax(core) :
+      match-syntax(form) :
+         (?e:#exp) : e
+
+defsyntax test-language :
+   defrule :
+      prefix-op = (assert-equal(?e:#exp! ?got:#exp! ?msg:#exp!)) :
+        val info = info(head(form) as Token)
+        val [file, line, col] = [filename(info), line(info), column(info)]
+        expande $ qquote(test/do-assert-equal(FileInfo(~ file, ~ line, ~ col), ~ e, ~ got, ~ msg))
+   defrule :
+      prefix-op = (assert(?t:#exp! ?msg:#exp!)) :
+        val info = info(head(form) as Token)
+        val [file, line, col] = [filename(info), line(info), column(info)]
+        expande $ qquote(test/do-assert(FileInfo(~ file, ~ line, ~ col), ~ t, ~ msg))
+   defrule :
+      prefix-op = (deftest ?name:#id! : ?body:#exp) :
+        expande $ qquote((
+          defn ~ name () : ~ body 
+          test/add-test(test/Test((@quote ~ name), ~ name)) ))
