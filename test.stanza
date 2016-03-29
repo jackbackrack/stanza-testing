@@ -11,11 +11,13 @@ public defn AssertionException (message: String) :
 
 public defn do-assert (info:FileInfo, good:True|False, message:String) :
   if not good :
-    println-all(["ASSERTION FAILED " message " AT " info])
+    throw(AssertionException(string-join(["ASSERTION FAILED: " message " AT " info])))
     
 public defn do-assert-equal<?T> (info:FileInfo, exp:?T&Equalable, got:T&Equalable, message:String) :
-  if exp != got :
-    throw(AssertionException(string-join(["ASSERTION "  message " FAILED EXPECTED " exp " GOT " got " AT " info])))
+  do-assert(info, exp == got, string-join([message " EXPECTED " exp " GOT " got]))
+
+public defn do-assert-equals<?T> (info:FileInfo, exp:Collection<?T&Equalable>, got:Collection<T&Equalable>, message:String) :
+  do-assert(info, all?(equal?, exp, got), string-join([message " EXPECTED " exp " GOT " got]))
 
 public defstruct Test :
   name: Symbol

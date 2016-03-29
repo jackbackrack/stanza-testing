@@ -15,6 +15,11 @@ defsyntax test-language :
         val [file, line, col] = [filename(info), line(info), column(info)]
         expande $ qquote(test/do-assert-equal(FileInfo(~ file, ~ line, ~ col), ~ e, ~ got, ~ msg))
    defrule :
+      prefix-op = (assert-equals(?e:#exp! ?got:#exp! ?msg:#exp!)) :
+        val info = info(head(form) as Token)
+        val [file, line, col] = [filename(info), line(info), column(info)]
+        expande $ qquote(test/do-assert-equals(FileInfo(~ file, ~ line, ~ col), ~ e, ~ got, ~ msg))
+   defrule :
       prefix-op = (assert(?t:#exp! ?msg:#exp!)) :
         val info = info(head(form) as Token)
         val [file, line, col] = [filename(info), line(info), column(info)]
