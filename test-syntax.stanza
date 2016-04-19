@@ -1,3 +1,5 @@
+;; See license.txt for details about licensing.
+
 defpackage deftest-macro :
    import core
    import stz/parser
