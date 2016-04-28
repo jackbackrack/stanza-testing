@@ -11,14 +11,14 @@ public defn AssertionException (message: String) :
     defmethod print (o:OutputStream, this) :
       print(message)
 
-public defn do-assert (info:FileInfo, good:True|False, message:String) :
+public defn do-assert (info:False|FileInfo, good:True|False, message:String) :
   if not good :
     throw(AssertionException(string-join(["ASSERTION FAILED: " message " AT " info])))
     
-public defn do-assert-equal<?T> (info:FileInfo, exp:?T&Equalable, got:T&Equalable, message:String) :
+public defn do-assert-equal<?T> (info:False|FileInfo, exp:?T&Equalable, got:T&Equalable, message:String) :
   do-assert(info, exp == got, string-join([message " EXPECTED " exp " GOT " got]))
 
-public defn do-assert-equals<?T> (info:FileInfo, exp:Collection<?T&Equalable>, got:Collection<T&Equalable>, message:String) :
+public defn do-assert-equals<?T> (info:False|FileInfo, exp:Collection<?T&Equalable>, got:Collection<T&Equalable>, message:String) :
   do-assert(info, all?(equal?, exp, got), string-join([message " EXPECTED " exp " GOT " got]))
 
 public defstruct Test :

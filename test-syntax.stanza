@@ -10,22 +10,34 @@ defn expande (form) :
       match-syntax(form) :
          (?e:#exp) : e
 
+defn first-info* (form) -> FileInfo|False :
+   defn loop (form) -> Maybe<FileInfo> :
+      match(form) :
+         (form:Token) : One(info(form))
+         (form:List) : first(loop, form)
+         (form) : None()
+   value?(loop(form))      
+
+defn first-info (form) ->  ? :
+  match(first-info*(form)) :
+    (f:False):    false
+    (i:FileInfo):
+      val [file, line, col] = [filename(i), line(i), column(i)]
+      qquote(FileInfo(~ file, ~ line, ~ col))
+
 defsyntax test-language :
    defrule :
       prefix-op = (assert-equal(?e:#exp! ?got:#exp! ?msg:#exp!)) :
-        val info = info(head(form) as Token)
-        val [file, line, col] = [filename(info), line(info), column(info)]
-        expande $ qquote(test/do-assert-equal(FileInfo(~ file, ~ line, ~ col), ~ e, ~ got, ~ msg))
+        val info = first-info(form) 
+        expande $ qquote(test/do-assert-equal(~ info, ~ e, ~ got, ~ msg))
    defrule :
       prefix-op = (assert-equals(?e:#exp! ?got:#exp! ?msg:#exp!)) :
-        val info = info(head(form) as Token)
-        val [file, line, col] = [filename(info), line(info), column(info)]
-        expande $ qquote(test/do-assert-equals(FileInfo(~ file, ~ line, ~ col), ~ e, ~ got, ~ msg))
+        val info = first-info(form) 
+        expande $ qquote(test/do-assert-equals(~ info, ~ e, ~ got, ~ msg))
    defrule :
       prefix-op = (assert(?t:#exp! ?msg:#exp!)) :
-        val info = info(head(form) as Token)
-        val [file, line, col] = [filename(info), line(info), column(info)]
-        expande $ qquote(test/do-assert(FileInfo(~ file, ~ line, ~ col), ~ t, ~ msg))
+        val info = first-info(form)
+        expande $ qquote(test/do-assert(~ info, ~ t, ~ msg))
    defrule :
       prefix-op = (deftest ?name:#id! : ?body:#exp) :
         expande $ qquote((
